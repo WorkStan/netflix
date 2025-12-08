@@ -4,16 +4,126 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.Arrays;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Main {
+    public static boolean isValidId(String id) {
+        if (id == null || id.trim().isEmpty()) {
+            return false;
+        }
+
+        Pattern pattern = Pattern.compile("^s\\d+$");
+        return pattern.matcher(id.trim()).matches();
+    }
+
+    public static Optional<LocalDate> parseDate(String dateString) {
+        if (dateString == null || dateString.trim().isEmpty()) {
+            return Optional.empty();
+        }
+
+        String cleaned = dateString.trim()
+                .replaceAll("^\"|\"$", "")
+                .trim();
+
+        if (cleaned.equalsIgnoreCase("")) {
+            return Optional.empty();
+        }
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM d, yyyy")
+                .withLocale(Locale.ENGLISH);
+
+        try {
+            return Optional.of(LocalDate.parse(cleaned, formatter));
+        } catch (DateTimeParseException e) {
+            System.err.println("Error parsing date: " + cleaned);
+            return Optional.empty();
+        }
+    }
+
     public static void main(String[] args) throws IOException {
         InputStream inputStream = Main.class.getResourceAsStream("/netflix_titles.csv");
-        assert inputStream != null;
+
+        if (inputStream == null) {
+            System.err.println("File not found!");
+            return;
+        }
+
         InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
         BufferedReader reader = new BufferedReader(inputStreamReader);
 
+        int lineNumber = 0;
+
+        if (reader.ready()) {
+            reader.readLine();
+            lineNumber++;
+        }
+
         while (reader.ready()) {
-            System.out.println(reader.readLine());
+            lineNumber++;
+
+            String line = reader.readLine();
+
+            String[] vals = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+
+            if (vals.length != 12) {
+                System.err.println("Line " + lineNumber + ": Invalid format - expected 12 columns, got " + vals.length);
+                continue;
+            }
+
+            String id = vals[0].trim();
+
+            if (!isValidId(id)) {
+                System.err.println("Line " + lineNumber + ": Invalid ID format - '" + id + "'");
+                continue;
+            }
+
+            String type = vals[1].trim();
+            String title = vals[2].trim();
+            String director = vals[3].trim();
+
+            String cast = vals[4].replaceAll("^\"+|\"+$", "");
+            String[] casts = cast.split(", ");
+
+            String country = vals[5].trim().replaceAll("^\"+|\"+$", "");
+
+            Optional<LocalDate> dateAdded = parseDate(vals[6]);
+
+            Integer releaseYear = Integer.parseInt(vals[7]);
+            String rating = vals[8];
+
+            Pattern pattern = Pattern.compile("\\d+");
+            Matcher matcher = pattern.matcher(vals[9]);
+            Integer duration;
+            if (matcher.find()) {
+                duration = Integer.parseInt(matcher.group());
+            } else {
+                duration = 0;
+            }
+
+            String listedIn = vals[10];
+            String description = vals[11].trim().replaceAll("^\"+|\"+$", "");
+
+            System.out.printf("""
+                    ID: %s
+                    Type: %s
+                    Title: %s
+                    Director: %s
+                    Casts: %s
+                    Country: %s
+                    Added at: %s
+                    Release: %s
+                    Rating: %s
+                    Duration: %s minutes
+                    Listed at: %s
+                    Desctiption: %s
+                    """, id, type, title, director, Arrays.toString(casts), country, dateAdded.toString(), releaseYear.toString(), rating, duration, listedIn, description);
         }
     }
 }
