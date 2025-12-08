@@ -1,4 +1,4 @@
-package run.netology.rakchaev;
+package ru.netology.rakchaev;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -58,8 +58,10 @@ public class Main {
         InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
         BufferedReader reader = new BufferedReader(inputStreamReader);
 
-        int lineNumber = 0;
+        Integer fileLines = 10_000;
+        NetflixMovie[] netflixMovies = new NetflixMovie[fileLines];
 
+        int lineNumber = 0;
         if (reader.ready()) {
             reader.readLine();
             lineNumber++;
@@ -104,26 +106,18 @@ public class Main {
             if (matcher.find()) {
                 duration = Integer.parseInt(matcher.group());
             } else {
-                duration = 0;
+                duration = null;
             }
 
             String listedIn = vals[10];
             String description = vals[11].trim().replaceAll("^\"+|\"+$", "");
 
-            System.out.printf("""
-                    ID: %s
-                    Type: %s
-                    Title: %s
-                    Director: %s
-                    Casts: %s
-                    Country: %s
-                    Added at: %s
-                    Release: %s
-                    Rating: %s
-                    Duration: %s minutes
-                    Listed at: %s
-                    Desctiption: %s
-                    """, id, type, title, director, Arrays.toString(casts), country, dateAdded.toString(), releaseYear.toString(), rating, duration, listedIn, description);
+            NetflixMovie movie = new NetflixMovie(id, type, title, director, casts, country, releaseYear, rating, duration, listedIn, description);
+            dateAdded.ifPresent(movie::setDateAdded);
+
+            netflixMovies[lineNumber] = movie;
+
+            System.out.println(movie.print());
         }
     }
 }
