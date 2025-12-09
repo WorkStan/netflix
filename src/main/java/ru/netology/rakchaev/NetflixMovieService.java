@@ -1,6 +1,9 @@
 package ru.netology.rakchaev;
 
+import org.springframework.stereotype.Service;
+
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.time.LocalDate;
@@ -10,6 +13,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Service
 public class NetflixMovieService implements MovieServiceInterface {
 
     private final Map<String, NetflixMovie> netflixMovies = new HashMap<>();
@@ -47,10 +51,15 @@ public class NetflixMovieService implements MovieServiceInterface {
         }
     }
 
-    public NetflixMovieService(InputStream inputStream) {
-        if (inputStream != null) {
+    public NetflixMovieService() {
+        try (
+            InputStream inputStream = Main.class.getResourceAsStream("/netflix_titles.csv");
+        ) {
             parseStreamAndPutData(inputStream);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
+
     }
 
     private void parseStreamAndPutData(InputStream inputStream) {

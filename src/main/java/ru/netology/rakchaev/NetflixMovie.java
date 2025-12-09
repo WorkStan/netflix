@@ -1,10 +1,11 @@
 package ru.netology.rakchaev;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class NetflixMovie {
     private final String id;
@@ -43,7 +44,102 @@ public class NetflixMovie {
         return id;
     }
 
-    public void setDateAdded(LocalDate dateAdded) {
+    @JsonIgnore
+    public String getCountriesFormatted() {
+        return countries.toString();
+    }
+
+    public String getType() {
+        return type.getDisplayName();
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getDirector() {
+        return director.toString();
+    }
+    @JsonProperty("casts")
+    public List<String> getCasts() {
+        List<String> actorNames = new ArrayList<>();
+        for (Actor actor : casts) {
+            actorNames.add(actor.toString());
+        }
+        return actorNames;
+    }
+
+    @JsonProperty("countries")
+    public List<String> getCountriesNames() {
+        List<String> countryNames = new ArrayList<>();
+        for (Country country : countries) {
+            if (country != null) {
+                countryNames.add(country.toString());
+            }
+        }
+        return countryNames;
+    }
+    public LocalDate getDateAdded() {
+        return dateAdded;
+    }
+
+    public Integer getReleaseYear() { return releaseYear; }
+
+    public String getRating() { return rating; }
+
+    public Integer getDuration() { return duration; }
+
+    @JsonProperty("listedIn")
+    public List<String> getListedIn() {
+        List<String> categoryNames = new ArrayList<>();
+        for (Category category : listedIn) {
+            categoryNames.add(category.toString());
+        }
+        return categoryNames;
+    }
+
+    public String getDescription() { return description; }
+
+    @JsonIgnore
+    public ContentType getContentType() {
+        return type;
+    }
+
+    @JsonIgnore
+    public List<Country> getCountries() {
+        return countries;
+    }
+
+    public String print() {
+        return """
+                ID: %s
+                Type: %s
+                Title: %s
+                Director: %s
+                Casts: %s
+                Country: %s
+                Added at: %s
+                Release: %s
+                Rating: %s
+                Duration: %s minutes
+                Listed at: %s
+                Description: %s
+                """.formatted(id, getType(), title, getDirectorFormatted(), getCastsFormatted(), getCountriesFormatted(), getDateAddedText(), releaseYear.toString(), rating, duration, getListedInFormatted(), description);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        NetflixMovie that = (NetflixMovie) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
+    }
+
+    private void setDateAdded(LocalDate dateAdded) {
         this.dateAdded = dateAdded;
     }
 
@@ -52,10 +148,6 @@ public class NetflixMovie {
             return "";
         }
         return this.dateAdded.toString();
-    }
-
-    public LocalDate getDateAdded() {
-        return dateAdded;
     }
 
     private String getCastsFormatted() {
@@ -104,50 +196,5 @@ public class NetflixMovie {
             }
         }
         this.countries = list;
-    }
-
-    public String getCountriesFormatted() {
-        return countries.toString();
-    }
-
-    public String getType() {
-        return type.getDisplayName();
-    }
-
-    public ContentType getContentType() {
-        return type;
-    }
-
-    public List<Country> getCountries() {
-        return countries;
-    }
-
-    public String print() {
-        return """
-                ID: %s
-                Type: %s
-                Title: %s
-                Director: %s
-                Casts: %s
-                Country: %s
-                Added at: %s
-                Release: %s
-                Rating: %s
-                Duration: %s minutes
-                Listed at: %s
-                Description: %s
-                """.formatted(id, getType(), title, getDirectorFormatted(), getCastsFormatted(), getCountriesFormatted(), getDateAddedText(), releaseYear.toString(), rating, duration, getListedInFormatted(), description);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        NetflixMovie that = (NetflixMovie) o;
-        return Objects.equals(id, that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(id);
     }
 }
