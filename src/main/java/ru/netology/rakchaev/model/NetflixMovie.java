@@ -1,11 +1,11 @@
-package ru.netology.rakchaev;
+package ru.netology.rakchaev.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class NetflixMovie {
     private final String id;
@@ -21,7 +21,21 @@ public class NetflixMovie {
     private List<Category> listedIn;
     private String description;
 
-    public NetflixMovie(String id, String type, String title, String director, String[] casts, String[] countries, Integer releaseYear, String rating, Integer duration, String[] listedIn, String description, Optional<LocalDate> dateAdded) {
+    @JsonCreator
+    public NetflixMovie(
+            @JsonProperty("id") String id,
+            @JsonProperty("type") String type,
+            @JsonProperty("title") String title,
+            @JsonProperty("director") String director,
+            @JsonProperty("casts") List<String> casts,
+            @JsonProperty("countries") List<String> countries,
+            @JsonProperty("dateAdded") LocalDate dateAdded,
+            @JsonProperty("releaseYear") Integer releaseYear,
+            @JsonProperty("rating") String rating,
+            @JsonProperty("duration") Integer duration,
+            @JsonProperty("listedIn") List<String> listedIn,
+            @JsonProperty("description") String description
+    ) {
         this.id = id;
         this.type = ContentType.fromString(type);
         this.title = title;
@@ -33,7 +47,7 @@ public class NetflixMovie {
         this.duration = duration;
         this.description = description;
 
-        dateAdded.ifPresent(this::setDateAdded);
+        this.dateAdded = dateAdded;
 
         setListedInFromString(listedIn);
         setCountriesFromString(countries);
@@ -58,8 +72,12 @@ public class NetflixMovie {
     }
 
     public String getDirector() {
+        if (director == null) {
+            return null;
+        }
         return director.toString();
     }
+
     @JsonProperty("casts")
     public List<String> getCasts() {
         List<String> actorNames = new ArrayList<>();
@@ -165,7 +183,7 @@ public class NetflixMovie {
         return director.toString();
     }
 
-    private void setListedInFromString(String[] listedInStrings) {
+    private void setListedInFromString(List<String> listedInStrings) {
         List<Category> list = new ArrayList<>();
         for (String listedInString : listedInStrings) {
             if (!listedInString.isEmpty()) {
@@ -176,7 +194,7 @@ public class NetflixMovie {
         this.listedIn = list;
     }
 
-    private void setCastsFromString(String[] castsString) {
+    private void setCastsFromString(List<String> castsString) {
         List<Actor> list = new ArrayList<>();
         for (String castString : castsString) {
             if (!castString.isEmpty()) {
@@ -187,7 +205,7 @@ public class NetflixMovie {
         this.casts = list;
     }
 
-    private void setCountriesFromString(String[] countriesString) {
+    private void setCountriesFromString(List<String> countriesString) {
         List<Country> list = new ArrayList<>();
         for (String countryString : countriesString) {
             if (!countryString.isEmpty()) {

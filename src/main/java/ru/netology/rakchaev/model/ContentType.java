@@ -1,4 +1,4 @@
-package ru.netology.rakchaev;
+package ru.netology.rakchaev.model;
 
 public enum ContentType {
     MOVIE("Movie"),
