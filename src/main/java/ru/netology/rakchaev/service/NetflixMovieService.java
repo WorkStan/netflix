@@ -1,6 +1,10 @@
-package ru.netology.rakchaev;
+package ru.netology.rakchaev.service;
 
 import org.springframework.stereotype.Service;
+import ru.netology.rakchaev.Main;
+import ru.netology.rakchaev.model.ContentType;
+import ru.netology.rakchaev.model.Country;
+import ru.netology.rakchaev.model.NetflixMovie;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,13 +14,14 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
 public class NetflixMovieService implements MovieServiceInterface {
 
-    private final Map<String, NetflixMovie> netflixMovies = new HashMap<>();
+    protected final Map<String, NetflixMovie> netflixMovies = new HashMap<>();
 
     private static boolean isValidId(String id) {
         if (id == null || id.trim().isEmpty()) {
@@ -27,9 +32,9 @@ public class NetflixMovieService implements MovieServiceInterface {
         return pattern.matcher(id.trim()).matches();
     }
 
-    public static Optional<LocalDate> parseDate(String dateString) {
+    public static LocalDate parseDate(String dateString) {
         if (dateString == null || dateString.trim().isEmpty()) {
-            return Optional.empty();
+            return null;
         }
 
         String cleaned = dateString.trim()
@@ -37,23 +42,23 @@ public class NetflixMovieService implements MovieServiceInterface {
                 .trim();
 
         if (cleaned.equalsIgnoreCase("")) {
-            return Optional.empty();
+            return null;
         }
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM d, yyyy")
                 .withLocale(Locale.ENGLISH);
 
         try {
-            return Optional.of(LocalDate.parse(cleaned, formatter));
+            return LocalDate.parse(cleaned, formatter);
         } catch (DateTimeParseException e) {
             System.err.println("Error parsing date: " + cleaned);
-            return Optional.empty();
+            return null;
         }
     }
 
     public NetflixMovieService() {
         try (
-            InputStream inputStream = Main.class.getResourceAsStream("/netflix_titles.csv");
+                InputStream inputStream = Main.class.getResourceAsStream("/netflix_titles.csv");
         ) {
             parseStreamAndPutData(inputStream);
         } catch (IOException e) {
@@ -102,7 +107,7 @@ public class NetflixMovieService implements MovieServiceInterface {
                 String country = vals[5].trim().replaceAll("^\"+|\"+$", "");
                 String[] countries = country.split(", ");
 
-                Optional<LocalDate> dateAdded = parseDate(vals[6]);
+                LocalDate dateAdded = parseDate(vals[6]);
 
                 Integer releaseYear = Integer.parseInt(vals[7]);
                 String rating = vals[8];
@@ -121,7 +126,7 @@ public class NetflixMovieService implements MovieServiceInterface {
 
                 String description = vals[11].trim().replaceAll("^\"+|\"+$", "");
 
-                NetflixMovie movie = new NetflixMovie(id, type, title, director, casts, countries, releaseYear, rating, duration, listedIn, description, dateAdded);
+                NetflixMovie movie = new NetflixMovie(id, type, title, director, Arrays.asList(casts), Arrays.asList(countries), dateAdded, releaseYear, rating, duration, Arrays.asList(listedIn), description);
 
                 create(movie);
             }
@@ -207,5 +212,19 @@ public class NetflixMovieService implements MovieServiceInterface {
         }
 
         return listMovies;
+    }
+
+    @Override
+    public Integer getAllDuration() {
+
+        AtomicInteger allduration = new AtomicInteger();
+
+        netflixMovies.forEach((id, movie) -> {
+            if (movie != null && movie.getDuration() != null) {
+                allduration.addAndGet(movie.getDuration());
+            }
+        });
+
+        return allduration.get();
     }
 }

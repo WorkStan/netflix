@@ -1,27 +1,27 @@
-package ru.netology.rakchaev;
+package ru.netology.rakchaev.model;
 
 import java.util.Objects;
 
-public final class Country {
+public final class Category {
     private final String name;
 
-    private Country(String name) {
+    private Category(String name) {
         if (name == null || name.trim().isEmpty()) {
-            throw new IllegalArgumentException("Country name can't be empty");
+            throw new IllegalArgumentException("Category name can't be empty");
         } else {
             this.name = name.trim();
         }
     }
 
-    public static Country of(String name) {
-        return new Country(name);
+    public static Category of(String name) {
+        return new Category(name);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Country country = (Country) o;
+        Category country = (Category) o;
         return name.equalsIgnoreCase(country.name);
     }
 
