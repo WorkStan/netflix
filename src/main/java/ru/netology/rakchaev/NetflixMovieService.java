@@ -10,9 +10,9 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class NetflixMovieService implements PopularCountryByTypeInterface{
-    Integer fileLines = 10_000;
-    NetflixMovie[] netflixMovies = new NetflixMovie[fileLines];
+public class NetflixMovieService implements MovieServiceInterface {
+
+    List<NetflixMovie> netflixMovies = new ArrayList<>();
 
     public static boolean isValidId(String id) {
         if (id == null || id.trim().isEmpty()) {
@@ -118,7 +118,7 @@ public class NetflixMovieService implements PopularCountryByTypeInterface{
                     NetflixMovie movie = new NetflixMovie(id, type, title, director, casts, countries, releaseYear, rating, duration, listedIn, description);
                     dateAdded.ifPresent(movie::setDateAdded);
 
-                    netflixMovies[lineNumber] = movie;
+                    netflixMovies.add(movie);
                 }
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -128,6 +128,7 @@ public class NetflixMovieService implements PopularCountryByTypeInterface{
         }
     }
 
+    @Override
     public Country getMostPopularCountryByType(ContentType contentType) {
         if (contentType == null) {
             return null;
@@ -160,5 +161,27 @@ public class NetflixMovieService implements PopularCountryByTypeInterface{
         }
 
         return mostPopular;
+    }
+
+    @Override
+    public List<NetflixMovie> getMovieByDateAddedRange(LocalDate dateFrom, LocalDate dateTo) {
+        if (dateFrom == null) {
+            dateFrom = LocalDate.MIN;
+        }
+        if (dateTo == null) {
+            dateTo = LocalDate.MAX;
+        }
+
+        List<NetflixMovie> listMovies = new ArrayList<>();
+        for (NetflixMovie movie : netflixMovies) {
+            if(movie.getDateAdded() == null) {
+                continue;
+            }
+            if(movie.getDateAdded().isAfter(dateFrom) && movie.getDateAdded().isBefore(dateTo)) {
+                listMovies.add(movie);
+            }
+        }
+
+        return listMovies;
     }
 }
