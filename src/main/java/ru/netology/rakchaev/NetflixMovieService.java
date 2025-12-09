@@ -12,9 +12,9 @@ import java.util.regex.Pattern;
 
 public class NetflixMovieService implements MovieServiceInterface {
 
-    List<NetflixMovie> netflixMovies = new ArrayList<>();
+    private final Map<String, NetflixMovie> netflixMovies = new HashMap<>();
 
-    public static boolean isValidId(String id) {
+    private static boolean isValidId(String id) {
         if (id == null || id.trim().isEmpty()) {
             return false;
         }
@@ -47,85 +47,100 @@ public class NetflixMovieService implements MovieServiceInterface {
         }
     }
 
-    public NetflixMovieService() {
+    public NetflixMovieService(InputStream inputStream) {
+        if (inputStream != null) {
+            parseStreamAndPutData(inputStream);
+        }
+    }
+
+    private void parseStreamAndPutData(InputStream inputStream) {
         try (
-            InputStream inputStream = Main.class.getResourceAsStream("/netflix_titles.csv");
+            InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+            BufferedReader reader = new BufferedReader(inputStreamReader);
         ) {
-            if (inputStream == null) {
-                System.err.println("File not found!");
-                return;
+            int lineNumber = 0;
+            if (reader.ready()) {
+                reader.readLine();
+                lineNumber++;
             }
-            try (
-                    InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
-                    BufferedReader reader = new BufferedReader(inputStreamReader);
-            ) {
 
+            while (reader.ready()) {
+                lineNumber++;
 
-                int lineNumber = 0;
-                if (reader.ready()) {
-                    reader.readLine();
-                    lineNumber++;
+                String line = reader.readLine();
+
+                String[] vals = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+
+                if (vals.length != 12) {
+                    System.err.println("Line " + lineNumber + " skipped: Invalid format - expected 12 columns, got " + vals.length);
+                    continue;
                 }
 
-                while (reader.ready()) {
-                    lineNumber++;
+                String id = vals[0].trim();
 
-                    String line = reader.readLine();
-
-                    String[] vals = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
-
-                    if (vals.length != 12) {
-                        System.err.println("Line " + lineNumber + ": Invalid format - expected 12 columns, got " + vals.length);
-                        continue;
-                    }
-
-                    String id = vals[0].trim();
-
-                    if (!isValidId(id)) {
-                        System.err.println("Line " + lineNumber + ": Invalid ID format - '" + id + "'");
-                        continue;
-                    }
-
-                    String type = vals[1].trim();
-                    String title = vals[2].trim();
-                    String director = vals[3].trim();
-
-                    String cast = vals[4].trim().replaceAll("^\"+|\"+$", "");
-                    String[] casts = cast.split(", ");
-
-                    String country = vals[5].trim().replaceAll("^\"+|\"+$", "");
-                    String[] countries = country.split(", ");
-
-                    Optional<LocalDate> dateAdded = parseDate(vals[6]);
-
-                    Integer releaseYear = Integer.parseInt(vals[7]);
-                    String rating = vals[8];
-
-                    Pattern pattern = Pattern.compile("\\d+");
-                    Matcher matcher = pattern.matcher(vals[9]);
-                    Integer duration;
-                    if (matcher.find()) {
-                        duration = Integer.parseInt(matcher.group());
-                    } else {
-                        duration = null;
-                    }
-
-                    String listedInText = vals[10].trim().replaceAll("^\"+|\"+$", "");
-                    String[] listedIn = listedInText.split(", ");
-
-                    String description = vals[11].trim().replaceAll("^\"+|\"+$", "");
-
-                    NetflixMovie movie = new NetflixMovie(id, type, title, director, casts, countries, releaseYear, rating, duration, listedIn, description);
-                    dateAdded.ifPresent(movie::setDateAdded);
-
-                    netflixMovies.add(movie);
+                if (!isValidId(id)) {
+                    System.err.println("Line " + lineNumber + " skipped: Invalid ID format - '" + id + "'");
+                    continue;
                 }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+
+                String type = vals[1].trim();
+                String title = vals[2].trim();
+                String director = vals[3].trim();
+
+                String cast = vals[4].trim().replaceAll("^\"+|\"+$", "");
+                String[] casts = cast.split(", ");
+
+                String country = vals[5].trim().replaceAll("^\"+|\"+$", "");
+                String[] countries = country.split(", ");
+
+                Optional<LocalDate> dateAdded = parseDate(vals[6]);
+
+                Integer releaseYear = Integer.parseInt(vals[7]);
+                String rating = vals[8];
+
+                Pattern pattern = Pattern.compile("\\d+");
+                Matcher matcher = pattern.matcher(vals[9]);
+                Integer duration;
+                if (matcher.find()) {
+                    duration = Integer.parseInt(matcher.group());
+                } else {
+                    duration = null;
+                }
+
+                String listedInText = vals[10].trim().replaceAll("^\"+|\"+$", "");
+                String[] listedIn = listedInText.split(", ");
+
+                String description = vals[11].trim().replaceAll("^\"+|\"+$", "");
+
+                NetflixMovie movie = new NetflixMovie(id, type, title, director, casts, countries, releaseYear, rating, duration, listedIn, description, dateAdded);
+
+                create(movie);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public Collection<NetflixMovie> findAll() {
+        return netflixMovies.values();
+    }
+
+    public NetflixMovie findById(String id) {
+        return netflixMovies.get(id);
+    }
+
+    public void create(NetflixMovie netflixMovie) {
+        if (!netflixMovies.containsKey(netflixMovie.getId()))
+            netflixMovies.put(netflixMovie.getId(), netflixMovie);
+    }
+
+    public void update(NetflixMovie netflixMovie) {
+        netflixMovies.put(netflixMovie.getId(), netflixMovie);
+    }
+
+    public void delete(String id) {
+        if (!netflixMovies.containsKey(id))
+            netflixMovies.remove(id);
     }
 
     @Override
@@ -136,7 +151,7 @@ public class NetflixMovieService implements MovieServiceInterface {
 
         Map<Country, Integer> countryCounts = new HashMap<>();
 
-        for (NetflixMovie movie : netflixMovies) {
+        netflixMovies.forEach((id, movie) -> {
             if (movie != null && movie.getContentType().equals(contentType)) {
                 List<Country> countries = movie.getCountries();
 
@@ -144,7 +159,7 @@ public class NetflixMovieService implements MovieServiceInterface {
                     countryCounts.put(country, countryCounts.getOrDefault(country, 0) + 1);
                 }
             }
-        }
+        });
 
         if (countryCounts.isEmpty()) {
             return null;
@@ -164,7 +179,7 @@ public class NetflixMovieService implements MovieServiceInterface {
     }
 
     @Override
-    public List<NetflixMovie> getMovieByDateAddedRange(LocalDate dateFrom, LocalDate dateTo) {
+    public Collection<NetflixMovie> getMovieByDateAddedRange(LocalDate dateFrom, LocalDate dateTo) {
         if (dateFrom == null) {
             dateFrom = LocalDate.MIN;
         }
@@ -172,8 +187,8 @@ public class NetflixMovieService implements MovieServiceInterface {
             dateTo = LocalDate.MAX;
         }
 
-        List<NetflixMovie> listMovies = new ArrayList<>();
-        for (NetflixMovie movie : netflixMovies) {
+        Collection<NetflixMovie> listMovies = new ArrayList<>();
+        for (NetflixMovie movie : netflixMovies.values()) {
             if(movie.getDateAdded() == null) {
                 continue;
             }

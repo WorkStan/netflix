@@ -3,6 +3,8 @@ package ru.netology.rakchaev;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 public class NetflixMovie {
     private final String id;
@@ -18,7 +20,7 @@ public class NetflixMovie {
     private List<Category> listedIn;
     private String description;
 
-    public NetflixMovie(String id, String type, String title, String director, String[] casts, String[] countries, Integer releaseYear, String rating, Integer duration, String[] listedIn, String description) {
+    public NetflixMovie(String id, String type, String title, String director, String[] casts, String[] countries, Integer releaseYear, String rating, Integer duration, String[] listedIn, String description, Optional<LocalDate> dateAdded) {
         this.id = id;
         this.type = ContentType.fromString(type);
         this.title = title;
@@ -30,9 +32,15 @@ public class NetflixMovie {
         this.duration = duration;
         this.description = description;
 
+        dateAdded.ifPresent(this::setDateAdded);
+
         setListedInFromString(listedIn);
         setCountriesFromString(countries);
         setCastsFromString(casts);
+    }
+
+    public String getId() {
+        return id;
     }
 
     public void setDateAdded(LocalDate dateAdded) {
@@ -129,5 +137,17 @@ public class NetflixMovie {
                 Listed at: %s
                 Description: %s
                 """.formatted(id, getType(), title, getDirectorFormatted(), getCastsFormatted(), getCountriesFormatted(), getDateAddedText(), releaseYear.toString(), rating, duration, getListedInFormatted(), description);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        NetflixMovie that = (NetflixMovie) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
     }
 }
