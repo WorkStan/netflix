@@ -13,7 +13,7 @@ public class NetflixMovie {
     private List<Country> countries;
     private LocalDate dateAdded;
     private Integer releaseYear;
-    private String rating ;
+    private String rating;
     private Integer duration;
     private List<Category> listedIn;
     private String description;
@@ -44,6 +44,10 @@ public class NetflixMovie {
             return "";
         }
         return this.dateAdded.toString();
+    }
+
+    public LocalDate getDateAdded() {
+        return dateAdded;
     }
 
     private String getCastsFormatted() {
@@ -112,18 +116,18 @@ public class NetflixMovie {
 
     public String print() {
         return """
-                    ID: %s
-                    Type: %s
-                    Title: %s
-                    Director: %s
-                    Casts: %s
-                    Country: %s
-                    Added at: %s
-                    Release: %s
-                    Rating: %s
-                    Duration: %s minutes
-                    Listed at: %s
-                    Description: %s
-                    """.formatted(id, getType(), title, getDirectorFormatted(), getCastsFormatted(), getCountriesFormatted(), getDateAddedText(), releaseYear.toString(), rating, duration, getListedInFormatted(), description);
+                ID: %s
+                Type: %s
+                Title: %s
+                Director: %s
+                Casts: %s
+                Country: %s
+                Added at: %s
+                Release: %s
+                Rating: %s
+                Duration: %s minutes
+                Listed at: %s
+                Description: %s
+                """.formatted(id, getType(), title, getDirectorFormatted(), getCastsFormatted(), getCountriesFormatted(), getDateAddedText(), releaseYear.toString(), rating, duration, getListedInFormatted(), description);
     }
 }
